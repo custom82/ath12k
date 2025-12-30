@@ -353,6 +353,8 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 			/* use MHI firmware file from firmware-N.bin */
 			mhi_ctrl->fw_data = ab->fw.amss_dualmac_data;
 			mhi_ctrl->fw_sz = ab->fw.amss_dualmac_len;
+			ath12k_info(ab, "MHI firmware: amss dualmac (size: %zu)\n",
+				    mhi_ctrl->fw_sz);
 		} else {
 			ath12k_warn(ab, "dualmac firmware IE not present in firmware-N.bin\n");
 			ret = -ENOENT;
@@ -363,12 +365,16 @@ int ath12k_mhi_register(struct ath12k_pci *ab_pci)
 			/* use MHI firmware file from firmware-N.bin */
 			mhi_ctrl->fw_data = ab->fw.amss_data;
 			mhi_ctrl->fw_sz = ab->fw.amss_len;
+			ath12k_info(ab, "MHI firmware: amss (size: %zu)\n",
+				    mhi_ctrl->fw_sz);
 		} else {
 			/* use the old separate mhi.bin MHI firmware file */
 			ath12k_core_create_firmware_path(ab, ATH12K_AMSS_FILE,
 							 ab_pci->amss_path,
 							 sizeof(ab_pci->amss_path));
 			mhi_ctrl->fw_image = ab_pci->amss_path;
+			ath12k_info(ab, "MHI firmware: legacy %s\n",
+				    mhi_ctrl->fw_image);
 		}
 	}
 
@@ -615,6 +621,9 @@ int ath12k_mhi_start(struct ath12k_pci *ab_pci)
 
 	ab_pci->mhi_ctrl->timeout_ms = MHI_TIMEOUT_DEFAULT_MS;
 
+	ath12k_info(ab_pci->ab, "MHI power up sequence start (timeout %u ms)\n",
+		    ab_pci->mhi_ctrl->timeout_ms);
+
 	ret = ath12k_mhi_set_state(ab_pci, ATH12K_MHI_INIT);
 	if (ret)
 		goto out;
@@ -626,6 +635,7 @@ int ath12k_mhi_start(struct ath12k_pci *ab_pci)
 	return 0;
 
 out:
+	ath12k_err(ab_pci->ab, "MHI power up sequence failed (%d)\n", ret);
 	return ret;
 }
 
