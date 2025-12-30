@@ -15,6 +15,8 @@ static int ath12k_fw_request_firmware_api_n(struct ath12k_base *ab,
 	struct ath12k_fw_ie *hdr;
 	const u8 *data;
 	__le32 *timestamp;
+	u32 timestamp_val = 0;
+	bool timestamp_found = false;
 
 	ab->fw.fw = ath12k_core_firmware_request(ab, name);
 	if (IS_ERR(ab->fw.fw)) {
@@ -26,6 +28,8 @@ static int ath12k_fw_request_firmware_api_n(struct ath12k_base *ab,
 
 	data = ab->fw.fw->data;
 	len = ab->fw.fw->size;
+
+	ath12k_info(ab, "firmware %s loaded (%zu bytes)\n", name, len);
 
 	/* magic also includes the null byte, check that as well */
 	magic_len = strlen(ATH12K_FIRMWARE_MAGIC) + 1;
@@ -80,8 +84,11 @@ static int ath12k_fw_request_firmware_api_n(struct ath12k_base *ab,
 
 			timestamp = (__le32 *)data;
 
+			timestamp_val = le32_to_cpup(timestamp);
+			timestamp_found = true;
+
 			ath12k_dbg(ab, ATH12K_DBG_BOOT, "found fw timestamp %d\n",
-				   le32_to_cpup(timestamp));
+				   timestamp_val);
 			break;
 		case ATH12K_FW_IE_FEATURES:
 			ath12k_dbg(ab, ATH12K_DBG_BOOT,
@@ -143,6 +150,11 @@ static int ath12k_fw_request_firmware_api_n(struct ath12k_base *ab,
 		len -= ie_len;
 		data += ie_len;
 	}
+
+	ath12k_info(ab,
+		    "firmware details: timestamp %s, amss %zu bytes, m3 %zu bytes, dualmac amss %zu bytes\n",
+		    timestamp_found ? "present" : "absent",
+		    ab->fw.amss_len, ab->fw.m3_len, ab->fw.amss_dualmac_len);
 
 	return 0;
 
